@@ -1,8 +1,10 @@
 
 // La map a afficher 
 var map;	
-// Les markers  afficher à l'écran 
+// Les markers  affich à l'écran 
 var markerBounds; 
+
+var tab_markers =[];
 
 
 //Cette fonction initialise la map 
@@ -11,12 +13,18 @@ function initMap() {
     center: {lat: -34.397, lng: 150.644},
     zoom: 11
   });
-  markerBounds = new google.maps.LatLngBounds();
+
 }	
 
 // Cette fonction permet de calculer la distance entre deux points, prend des Latlng google maps en entrée 
 function distance(point_a,point_b){
 	return Math.pow(point_a.lat() - point_b.lat(),2) + Math.pow(point_a.lng() - point_b.lng(),2); 
+}
+
+function clean(tab_markers){
+	for (var i = 0; i < tab_markers.length; i++) {
+    tab_markers[i].setMap(null);
+  }
 }
 
 // Cette fonction permet de calculer un barycentre elle prend en parametre un tableau de latitude, de longitude, le nbr d'amis et les poids à attribuer
@@ -55,11 +63,15 @@ function calcul_bary(users_array,nbr_amis,poids){
 
     // Tout le déroulement quand on appuis sur submit  
     $('#submit').click(function(){
-
+    	markerBounds = new google.maps.LatLngBounds();
     	var users_array = [];
     	var moyen_transport = [];
     	var nbr_amis = parseFloat($('#nbr_amis').val());
     	var poids = [];
+
+    	// On nettoie la map si on a déja utilisé le site 
+    	clean(tab_markers);
+    	tab_markers = [];
     	// On crée le tableau des poids 
     	for (var i =0; i < nbr_amis; i++){
     		poids.push(1);
@@ -73,7 +85,7 @@ function calcul_bary(users_array,nbr_amis,poids){
     	};
 
     	//On ajoute chque utilisateur à la map
-    	var tab_markers = [];
+    	
 
     	for(var i =0; i <users_array.length;i++){
     		var latlng = users_array[i];
@@ -84,8 +96,9 @@ function calcul_bary(users_array,nbr_amis,poids){
         		title : 'Utilisateur ' + (i+1).toString(),
         		label : (i + 1).toString()
     		});
+    		
+    	tab_markers.push(marker);
     	};
-
 
     	
     	
@@ -97,7 +110,7 @@ function calcul_bary(users_array,nbr_amis,poids){
  //Ici on va calculer les temps de trajet 
 
 		
- 		var dummy;
+ 
 		var service = new google.maps.DistanceMatrixService();
 		service.getDistanceMatrix(
   			{
@@ -166,6 +179,7 @@ function calcul_bary(users_array,nbr_amis,poids){
         			label : 'B'
     			});
      		map.fitBounds(markerBounds);
+     		tab_markers.push(marker);
     }
   );
 
