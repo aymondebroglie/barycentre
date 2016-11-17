@@ -45,6 +45,25 @@ function calcul_bary(users_array,nbr_amis,poids){
     	return origin;
 }
 
+//Cette fonction test si le tableau des temps de trajets est suffisamment lisse
+function test_tableau(tab){
+	//On calcule la moyenne
+	var moyenne=0;
+	for(var i = 0; i < tab.length ; i++){
+		moyenne = moyenne + tab[i];
+	}
+	moyenne = moyenne/tab.length;
+
+	for(var i = 0; i < tab.length ; i++){
+		if(tab[i] > 1.2*moyenne ){
+			return false
+		}
+	}
+	return true;
+}
+
+
+
 
 // Si on clique sur c'est parti affiche un formulaire par participant
     $('#parti').click(function(){
@@ -96,7 +115,7 @@ function calcul_bary(users_array,nbr_amis,poids){
         		title : 'Utilisateur ' + (i+1).toString(),
         		label : (i + 1).toString()
     		});
-    		
+
     	tab_markers.push(marker);
     	};
 
@@ -123,7 +142,7 @@ function calcul_bary(users_array,nbr_amis,poids){
  		function callback(response, status) {
   			if (status == google.maps.DistanceMatrixStatus.OK) {
   				console.log(response);
-  				dummy = "ok";
+  				var temps_trajet = [];
     			var origins = response.originAddresses.length;
     			var destinations = response.destinationAddresses;
 
@@ -132,10 +151,13 @@ function calcul_bary(users_array,nbr_amis,poids){
       				for (var j = 0; j < results.length; j++) {
         				var element = results[j];        				
         				var duration = element.duration.value;
-        				console.log(duration);
+        				temps_trajet.push(duration);
+        				console.log(temps_trajet);
 		      				}
     			}
   			}
+
+
 		}
 
 
