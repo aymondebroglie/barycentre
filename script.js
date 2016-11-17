@@ -16,20 +16,19 @@ function initMap() {
 
 // Cette fonction permet de calculer la distance entre deux points, prend des Latlng google maps en entrée 
 function distance(point_a,point_b){
-	console.log(Math.pow(point_a.lat() - point_b.lat(),2) + Math.pow(point_a.lng() - point_b.lng(),2));
 	return Math.pow(point_a.lat() - point_b.lat(),2) + Math.pow(point_a.lng() - point_b.lng(),2); 
 }
 
 // Cette fonction permet de calculer un barycentre elle prend en parametre un tableau de latitude, de longitude, le nbr d'amis et les poids à attribuer
-function calcul_bary(lat_array,long_array,nbr_amis,poids){
+function calcul_bary(users_array,nbr_amis,poids){
 	//Calcule du barycentre
     	var lat_bary = 0;
     	var long_bary = 0;
     	
-    	for(var i = 0; i < lat_array.length ; i++){
+    	for(var i = 0; i < users_array.length ; i++){
     		pd_temp = poids[i];
-    		lat_bary = lat_bary + pd_temp*lat_array[i];
-    		long_bary = long_bary + pd_temp*long_array[i];
+    		lat_bary = lat_bary + pd_temp*users_array[i].lat();
+    		long_bary = long_bary + pd_temp*users_array[i].lng();
     	};
     	
     	lat_bary = lat_bary/nbr_amis;
@@ -57,8 +56,7 @@ function calcul_bary(lat_array,long_array,nbr_amis,poids){
     // Tout le déroulement quand on appuis sur submit  
     $('#submit').click(function(){
 
-    	var lat_array = [];
-    	var long_array = [];
+    	var users_array = [];
     	var moyen_transport = [];
     	var nbr_amis = parseFloat($('#nbr_amis').val());
     	var poids = [];
@@ -69,8 +67,7 @@ function calcul_bary(lat_array,long_array,nbr_amis,poids){
     	//On récupère les valeurs de longitudes et latitudes ainsi que les moyens de transport
     	
     	for(var i = 1 ; i<=nbr_amis;i++){
-    		long_array.push(parseFloat($('#longitude_' + i.toString()).val()));
-    		lat_array.push(parseFloat($('#latitude_' + i.toString()).val()));
+    		users_array.push(new google.maps.LatLng(parseFloat($('#latitude_' + i.toString()).val()),parseFloat($('#longitude_' + i.toString()).val())));
     		var text = $('#transport_' + i.toString()).val();
     		moyen_transport.push(text);;
     	};
@@ -78,8 +75,8 @@ function calcul_bary(lat_array,long_array,nbr_amis,poids){
     	//On ajoute chque utilisateur à la map
     	var tab_markers = [];
 
-    	for(var i =0; i <lat_array.length;i++){
-    		var latlng = new google.maps.LatLng(lat_array[i],long_array[i]);
+    	for(var i =0; i <users_array.length;i++){
+    		var latlng = users_array[i];
     		markerBounds.extend(latlng);
     		var marker = new google.maps.Marker({
         		position: latlng,
@@ -92,24 +89,38 @@ function calcul_bary(lat_array,long_array,nbr_amis,poids){
 
     	
     	
-    	var origin = calcul_bary(lat_array,long_array,nbr_amis,poids);
+    	var origin = calcul_bary(users_array,nbr_amis,poids);
 		var latlng_bary = origin;
  
+		//
+
  //Ici on va calculer les temps de trajet 
+
+		
+ 		var dummy;
+		var service = new google.maps.DistanceMatrixService();
+		service.getDistanceMatrix(
+  			{
+    			origins: users_array,
+    			destinations: [latlng_bary],
+    			travelMode: google.maps.TravelMode.DRIVING,
+  			}, callback);
+
+
  		function callback(response, status) {
   			if (status == google.maps.DistanceMatrixStatus.OK) {
-    			var origins = response.originAddresses;
+  				console.log(response);
+  				dummy = "ok";
+    			var origins = response.originAddresses.length;
     			var destinations = response.destinationAddresses;
 
-    			for (var i = 0; i < origins.length; i++) {
+    			for (var i = 0; i < origins; i++) {
       				var results = response.rows[i].elements;
       				for (var j = 0; j < results.length; j++) {
-        				var element = results[j];
-        				var distance = element.distance.text;
-        				var duration = element.duration.text;
-        				var from = origins[i];
-        				var to = destinations[j];
-      				}
+        				var element = results[j];        				
+        				var duration = element.duration.value;
+        				console.log(duration);
+		      				}
     			}
   			}
 		}
@@ -117,7 +128,7 @@ function calcul_bary(lat_array,long_array,nbr_amis,poids){
 
 
 // On cherche la station de métro la plus proche si elle existe 
-	
+
 	
 		var request = {
     	location: latlng_bary,
