@@ -80,19 +80,19 @@ function test_tableau(tab){
 
 //Cette fonction v, à partir du tableau des temps de trajet,calculer un nouveau tableau de poids 
 
-function calcul_poids(tab){
-		var poids = [];
+function calcul_poids(tab,poids){
+		var result = [];
 		mean = moyenne(tab);
 	for(var i = 0; i < tab.length ; i++){
 		if(tab[i] > 1.2*mean ){
-			poids.push(1 + (tab[i] -mean)/mean)
+			result.push(poids[i] + (tab[i] -mean));
 		}
 		else{
-			poids.push(1);
+			result.push(poids[i]);
 		}
 
 	}
-	return poids;
+	return result;
 }
 
 // Si on clique sur c'est parti affiche un formulaire par participant
@@ -152,6 +152,9 @@ function calcul_poids(tab){
     	
     	
     	var latlng_bary = calcul_bary(users_array,poids);
+    	console.log(latlng_bary.lat());
+    	console.log(latlng_bary.lng());
+
 		//Evite les boucles infinies si erreur de code 
  		var compteur = 0;
 		//
@@ -187,20 +190,26 @@ function calcul_poids(tab){
         				temps_trajet.push(duration);
 		      				}
     			}
-    			console.log(temps_trajet);
-    			console.log(test_tableau(temps_trajet));
-    			if(!test_tableau(temps_trajet)){
+    			console.log(temps_trajet);;
+    			console.log(test_tableau(temps_trajet))
+    			if(!test_tableau(temps_trajet) && compteur < 25){
     			//Dans ce cas il faut caluler un nouveau barycentre 
     			//On commence par calculer le nouveau tableau de poids  
-    			poids = calcul_poids(temps_trajet);
+    			poids = calcul_poids(temps_trajet,poids);
     			console.log(poids);
-    			console.log(latlng_bary.lat());
-    			console.log(latlng_bary.lng());
+
     			//On calcul le nouveau barycentre 
     			latlng_bary = calcul_bary(users_array,poids);
+    			// On relance tout 
 
-    			console.log(latlng_bary.lat());
-    			console.log(latlng_bary.lng());
+				var service = new google.maps.DistanceMatrixService();
+		
+				service.getDistanceMatrix(
+  				{
+    			origins: users_array,
+    			destinations: [latlng_bary],
+    			travelMode: google.maps.TravelMode.DRIVING,
+  				}, callback);
     			console.log("salut");
     			}
  
@@ -209,7 +218,7 @@ function calcul_poids(tab){
 
   			// On cherche la station de métro la plus proche si elle existe 
 
-	
+		
 		var request = {
     	location: latlng_bary,
     	radius: '2000',
@@ -222,11 +231,12 @@ function calcul_poids(tab){
 
     		if (status == google.maps.places.PlacesServiceStatus.OK) {
     		//On choisist la station de metro la plus proche
+    			var origin = latlng_bary;
     			var dist_min = Number.MAX_VALUE;
     			var temp;
     			for(var i =0; i < results.length ; i++){
     				temp = results[i].geometry.location;
-    				var distance_temp = distance(latlng_bary,temp);
+    				var distance_temp = distance(origin,temp);
 
     				if( distance_temp < dist_min){
     					latlng_bary = temp;
@@ -237,7 +247,7 @@ function calcul_poids(tab){
     				};
       			}
       // On ajoute le barycentre 
-
+      		
       		markerBounds.extend(latlng_bary);
     			var marker = new google.maps.Marker({
         			position: latlng_bary,
